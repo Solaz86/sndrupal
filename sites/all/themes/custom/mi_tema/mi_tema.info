@@ -1,0 +1,17 @@
+name = My new custom theme from scratch
+description = Best next gen theme for drupal you barely can pay, insect
+core = 7.x
+engine = phptemplate
+
+regions[header] = Header
+regions[right] = Right sidebar
+regions[left] = Left sidebar
+regions[content] = Content
+regions[footer] = Footer
+
+stylesheets[all][] = css/layout.css
+stylesheets[all][] = css/style.css
+
+features[] = name
+features[] = main_menu
+
