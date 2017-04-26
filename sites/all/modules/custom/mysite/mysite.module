@@ -1,0 +1,133 @@
+<?php 
+/**
+ * Implements hook_help().
+ */
+function mysite_help($path, $arg) {
+  switch ($path) {
+    // Main module help for the block module
+    case 'admin/help#header':
+      return '<p>' . t('Custom parameters for this page') . '</p>';
+  }
+}
+/**
+ * Implements hook_permission().
+ */
+function mysite_permission() {
+  return array(
+    'my site' =>  array(
+      'title' => t('See my site'),
+      'description' => t('custom parameters asked to do by Edilson for Carlos'),
+    ),
+  );
+}
+/**
+ * Implements hook_menu().
+ */
+function mysite_menu() {
+
+  $items['mysite/first-task'] = array(
+    'title' => t('Customized form'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('mysite_form'), 
+    'access arguments' => array('my site'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+    $items['mysite/autocomplete'] = array(
+    'title' => t('Autocomplete for user'),
+    'page callback' => 'mysite_user_autocomplete',
+    'access arguments' => array('my site'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+/**
+ * Implements hook_form().
+ */
+function mysite_form($form, &$form_state) {
+  // batch_example();  // con esta funcion el sistema carga lotes en cierta cantidad de nodos
+
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Write your name or email'),
+    '#autocomplete_path' => 'mysite/autocomplete'
+  );
+
+  $form['send'] = array(
+    '#type' => 'button',
+    '#value' => t('Send'),
+    '#ajax' => array(
+      'callback' => 'mysite_form_ajax'
+    )
+  );
+
+
+  return $form;
+}
+
+function mysite_form_ajax($form, &$form_state) {
+  $test = list($name, $email) = explode('|', $form_state['values']['name']);
+  $user = user_load_by_mail($email);
+              
+  dpm($test, 'en $formstate');
+  dpm($user, 'en $user');
+  dpm($email, 'en $email');
+  $render = array(
+    '#prefix' => '<div id="user-info">',
+    '#suffix' => '</div>',
+    'name' => array(
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+      '#markup' => t('Name') . ': '. $user->name
+    ),
+    'email' => array(
+      '#prefix' => '<p>',
+      '#suffix' => '</p>',
+      '#markup' => $user->mail
+    )
+  );
+
+  // for ($i = 1; $i < 100000 ; $i++) { 
+  //   shell_exec('ls');
+  // }
+
+  $commands = array();
+
+  $commands[] = ajax_command_remove('#user-info');
+  $commands[] = ajax_command_after('#mysite-form', render($render));
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/**
+ * Implements hook_form_submit().
+ */
+function mysite_form_submit($form, &$form_state) {
+}
+
+/**
+* autocomplete helper
+* $string = string for search
+*/
+function mysite_user_autocomplete($string) {
+  $or = db_or()
+    ->condition('name', '%' . $string . '%', 'LIKE')
+    ->condition('mail', '%' . $string . '%', 'LIKE');
+  $query = db_select('users', 'us')
+    ->fields('us', array('uid', 'name', 'mail'))
+    ->condition($or)
+    ->execute()->fetchAll();
+
+  if (empty($query)) {
+    $return[] = t('Results not found');
+  }
+  else {
+    foreach ($query as $key => $userInfo) {
+      $displayName = strtolower($userInfo->name) . '|' . strtolower($userInfo->mail);
+      $match = str_replace(strtolower($string), '<span style="color: red">' . $string . '</span>', $displayName);
+      $return[$displayName] = $match;
+      // $return['loco'] = $match;
+    }
+  }
+
+  drupal_json_output($return);
+}
