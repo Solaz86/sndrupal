@@ -1,0 +1,5 @@
+name = My site
+description = "Primer formulario independiente"
+package = Custom
+core = 7.x
+version = 1.0.0
