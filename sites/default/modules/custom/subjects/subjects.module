@@ -1,0 +1,114 @@
+<?php
+
+
+
+/**
+ * Implements hook_menu().
+ */
+function subjects_menu() {
+
+  $items['registration/subjects'] = array(
+    'title' => 'materies_form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('subjects_form'),
+    'access arguments' => array('implement registration'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+/**
+ * Implements hook_form().
+ */
+function subjects_form($subjects, &$form_state) {
+// dpm($_POST);
+
+  $bool_edith_subject = TRUE; 
+
+    $subjects['name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Create subject'),
+      '#access' => $bool_edith_subject
+    );
+    $subjects['accept'] = array(
+      '#type' => 'submit',
+      '#value' => t('accept'),
+      '#access' => $bool_edith_subject
+    );    
+
+    return $subjects;
+
+}
+
+/**
+ * Implements hook_validate().
+ */
+function subjects_form_validate($form, &$form_state) {
+  dpm($form_state);
+  if (empty($form_state['values']['school_name'])) {
+  form_set_error('shool_name', t('This field is required'));
+  }  
+}
+
+
+function subjects_form_submit($subjects, &$form_state) {
+
+
+    dpm($form_state, 'en submit');
+    $values = $form_state['values'];
+    $record = array(
+     'subject_name' => $values['school_name'],
+    );
+    // se inserta el nombre de la nueva materia en la base de datos
+    // db_insert('subjects')
+    //   ->fields($record)
+    //   ->execute();
+
+    drupal_set_message(t('New subject created'));
+  
+}
+
+// function courses_form($courses, &$form_state) {
+// // dpm($_POST);
+
+//   $bool_edith_subject = TRUE; 
+
+//     $courses['name'] = array(
+//       '#type' => 'textfield',
+//       '#title' => t('Create courses'),
+//       '#access' => $bool_edith_subject
+//     );
+//     $courses['accept'] = array(
+//       '#type' => 'submit',
+//       '#value' => t('accept'),
+//       '#access' => $bool_edith_subject
+//     );    
+
+//     return $courses;
+
+// }
+// function courses_form_validate($courses, &$form_state) {
+//   dpm($form_state);
+//   if (empty($form_state['values']['school_name'])) {
+//   form_set_error('shool_name', t('This field is required'));
+//   }  
+// }
+
+// function courses_form_submit($subjects, &$form_state) {
+
+
+//     dpm($form_state, 'en submit');
+//     $values = $form_state['values'];
+//     $record = array(
+//      'subject_name' => $values['school_name'],
+//     );
+//     // se inserta el nombre de la nueva materia en la base de datos
+//     // db_insert('subjects')
+//     //   ->fields($record)
+//     //   ->execute();
+
+//     drupal_set_message(t('New subject created'));
+  
+// }

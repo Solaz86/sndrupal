@@ -1,0 +1,156 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function sicnotas_management_schema() {
+  $schema['sicnotas_management_school_year'] = array(
+    'description' => 'School year',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Year Id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'year' => array(
+        'description' => 'year',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['sicnotas_management_degrees'] = array(
+    'description' => 'Degrees table',
+    'fields' => array(
+      'id' => array(
+        'description' => 'degree id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'degree name',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['sicnotas_management_competition'] = array(
+    'description' => 'competitions table',
+    'fields' => array(
+      'id' => array(
+        'description' => 'competition id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'competition name',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['sicnotas_management_courses'] = array(
+    'description' => 'Courses table',
+    'fields' => array(
+      'id' => array(
+        'description' => 'course id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'course name',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'degree_id' => array(
+        'description' => 'degree id',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'foreign keys' => array(
+      'course_degree' => array(
+        'table' => 'sicnotas_management_degrees',
+        'columns' => array('degree_id' => 'id'),
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['sicnotas_management_subjects'] = array(
+    'description' => 'Subjects table',
+    'fields' => array(
+      'id' => array(
+        'description' => 'subjects id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'subject name',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+
+  $schema['sicnotas_management_subjects_degree'] = array(
+    'description' => 'Subjects table',
+    'fields' => array(
+      'id' => array(
+        'description' => 'subjects_degree id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'year_id' => array(
+        'description' => 'year id',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),      
+      'degree_id' => array(
+        'description' => 'course id',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'subject_id' => array(
+        'description' => 'subject id',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),      
+    ),
+    'foreign keys' => array(
+      'subjects_degree_year' => array(
+        'table' => 'sicnotas_management_year',
+        'columns' => array('year_id' => 'id'),
+      ),
+      'subjects_degree_degree' => array(
+        'table' => 'sicnotas_management_degree',
+        'columns' => array('degree_id' => 'id'),
+      ),
+      'course_degree_subject' => array(
+        'table' => 'sicnotas_management_subjects',
+        'columns' => array('subject_id' => 'id'),
+      ),
+    ),
+    'primary key' => array('id'),
+  );  
+  return $schema;
+}
+

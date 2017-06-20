@@ -1,0 +1,28 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function subjects_schema() {
+
+  $schema['subjects'] = array(
+    'description' => 'This table save subjects',
+    'fields' => array(
+      'subjects_id' => array(
+        'description' => 'clave',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+	    'name' => array(
+	    	'description' => t('name of the subjects'),
+	    	'type' => 'varchar',
+	    	'length' => 255,
+	    	'not null' => TRUE,
+	    	'default' => '',
+	    ),
+	  ),
+	  'primary key' => array('subjects_id'),
+  );
+  return $schema;
+}

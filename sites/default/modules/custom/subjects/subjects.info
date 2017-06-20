@@ -1,0 +1,5 @@
+name = subject Registration
+description = "School Registration form"
+package = Custom
+core = 7.x
+version = 1.0.0

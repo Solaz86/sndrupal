@@ -1,0 +1,5 @@
+name = options
+description = "options to pick"
+package = Custom
+core = 7.x
+version = 1.0.0

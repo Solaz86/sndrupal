@@ -1,0 +1,29 @@
+<?php 
+
+/**
+ * Implements hook_permission().
+ */
+function forms-prueba_permission() {
+  return array(
+    'permisos' =>  array(
+      'title' => t('Permision.Prueba'),
+      'description' => t('lorem impsut'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function forms-prueba_menu() {
+
+  $items['prueba-duvan'] = array(
+    'title' => 'Menu de prueba',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('forms_prueba_form'),
+    'access arguments' => array('permisos'),
+    'type' =>MENU_NORMAL_ITEM    
+  );
+
+  return $items;
+}

@@ -1,0 +1,38 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function sicnotas_register_permission() {
+  return array(
+    'sicnotas staff permission' =>  array(
+      'title' => t('permission to access'),
+      'description' => t('Define who can access to this module'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sicnotas_register_menu() {
+
+  $items['staff-register'] = array(
+    'title' => t('Staff registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(sicnotas_register_staff_form),
+    'access arguments' => array('sicnotas staff permission'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_register_staff.inc'
+  );
+
+  $items['students-register'] = array(
+    'title' => t('Students registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array(sicnotas_register_students_form),
+    'access arguments' => array('sicnotas staff permission'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_register_students.inc'
+  );
+  return $items;
+}

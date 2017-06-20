@@ -1,0 +1,28 @@
+<?php
+
+
+/**
+ * Implements hook_schema().
+ */
+function school_registration_schema() {
+  $schema['school_registration'] = array(
+    'description' => 'This table saves School registration',
+    'fields' => array(
+      'id' => array(
+        'description' => 'Unique identifier',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+	    'school_name' => array(
+	    	'description' => t('School name'),
+	    	'type' => 'varchar',
+	    	'length' => 255,
+	    	'not null' => TRUE,
+	    	'default' => '',
+	    ),
+	  ),
+	  'primary key' => array('school_id'),
+  );
+  return $schema;
+}

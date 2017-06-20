@@ -1,0 +1,426 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function sicnotas_management_permission() {
+  return array(
+    'school management' => array(
+      'title' => t('management for school'),
+      'description' => t('management for school'),
+    )
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+function sicnotas_management_help($path, $arg) {
+  switch ($path) {
+   case 'admin/help#content':
+    return '<p>' . t('Administrative module for main registration') . '</p>';
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sicnotas_management_menu() {
+
+$items['management-menu'] = array(
+    'title' => t('Menu'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_form'),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['competition-registration'] = array(
+    'title' => t('Competition registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_competition_form'),
+    'access arguments' => array('school management'),
+    'file' => 'inc/sicnotas_management_competition.inc'
+  );
+
+  $items['degrees-registration'] = array(
+    'title' => t('Degrees registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_degrees_form'),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_management_degrees.inc'
+  );
+
+  $items['courses-registration'] = array(
+    'title' => t('Courses registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_courses_form'),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_management_courses.inc'
+  );
+
+  $items['subjects-registration'] = array(
+    'title' => t('Subjects registration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_subjects_form'),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_management_subjects.inc'
+  );
+
+  $items['school-year'] = array(
+    'title' => t('Year in course'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_management_school_year_form'),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_management_school_year.inc'
+  );
+
+  $items["sicnotas_management-subjects-degree-year"] = array(
+    'title' => t('Pick the year tu submit subjects and degrees'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array("sicnotas_management_subjects_degree_year_form"),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+
+  $items["subjects-degree/%"] = array(
+    'title' => t('Register subjects of each degree'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array("sicnotas_management_subjects_degree_form", 1),
+    'access arguments' => array('school management'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'inc/sicnotas_management_subjects_degree.inc'
+  );
+
+  // $items['school-year-periods'] = array(
+  //   'title' => t('Year periods'),
+  //   'page callback' => 'drupal_get_form',
+  //   'page arguments' => array('sicnotas_management_school_year_periods_form'),
+  //   'access arguments' => array('school management'),
+  //   'file' => 'inc/sicnotas_management_school_year_periods.inc',
+  //   'type' => MENU_NORMAL_ITEM,
+  //   );
+  //   
+  return $items;
+}
+
+
+
+/**
+ * Implements hook_form().
+ */
+function sicnotas_management_form($form, &$form_state) {
+
+  $form['link_year'] = array(
+    '#type' => 'submit',
+    '#value' => t('Years'), 
+    '#name' => 'submit_year'
+  );
+
+  $form['link_degree'] = array(
+    '#type' => 'submit',
+    '#value' => t('Degrees'),
+    '#name' => 'submit_degree'
+  );
+
+  $form['link_competition'] = array(
+    '#type' => 'submit',
+    '#value' => t('Competitions'),
+    '#name' => 'submit_competition'
+  );
+
+  $form['link_courses'] = array(
+    '#type' => 'submit',
+    '#value' => t('Courses'),
+    '#name' => 'submit_courses'
+  );
+
+  $form['link_subjects'] = array(
+    '#type' => 'submit',
+    '#value' => t('Subjects'),
+    '#name' => 'submit_subjects'
+  );
+
+  $form['link_subjects_degree'] = array(
+    '#type' => 'submit',
+    '#value' => t('Degrees'),
+    '#name' => 'submit_subjects_degree'
+  );
+  return $form;
+}
+
+
+/**
+ * Implementation of hook_bean_form_submit().
+ */
+function sicnotas_management_form_submit($form, $form_state) {
+
+  $submit = $form_state['triggering_element']['#name'];
+  if ($submit == 'submit_year') {
+    drupal_goto('school-year');
+  }
+  if ($submit == 'submit_degree') {
+    drupal_goto('degrees-registration');
+  }
+  if ($submit == 'submit_competition') {
+    drupal_goto('competition-registration');
+  }
+  if ($submit == 'submit_courses') {
+    drupal_goto('courses-registration');
+  }
+  if ($submit == 'submit_subjects') {
+    drupal_goto('subjects-registration');
+  }
+  if ($submit == 'submit_subjects_degree') {
+    drupal_goto('subjects-degree');
+  }         
+}
+
+
+function sicnotas_management_subjects_degree_year_form($form, &$form_state) {
+
+  foreach (years_options() as $key) {
+    $form['wrapper'][] = array(
+      '#markup' => l($key, "subjects-degree/$key", ['attributes' => ['class' => ['btn btn-default']]])
+    );
+  }
+
+  return $form;
+}
+
+
+/**
+ * Get al the years id
+ *
+ * @return     array  (years available)
+ */
+function years_options() {
+  $query = db_select('sicnotas_management_school_year', 'year')
+    ->fields('year')
+    ->execute()
+    ->fetchAll();
+
+  $years = array();
+  foreach ($query as $yearInfo) {
+    $years[$yearInfo->id] = $yearInfo->year;
+  }
+
+  asort($years);
+  return ($years);
+}
+
+/**
+ * Get al the degrees
+ *
+ * @return     array  (degrees available)
+ */
+function degrees_options() {
+  $query = db_select('sicnotas_management_degrees', 'degree')
+    ->fields('degree')
+    ->execute()
+    ->fetchAll();
+
+  $degrees = array();
+  foreach ($query as $degreeInfo) {
+    $degrees[$degreeInfo->id] = $degreeInfo->name;
+  }
+  return ($degrees);
+}
+
+/**
+ * Get al the subjects id
+ *
+ * @return     array  (subjects available)
+ */
+function subjects_options() {
+  $query = db_select('sicnotas_management_subjects', 'subjects')
+    ->fields('subjects')
+    ->execute()
+    ->fetchAll();
+
+  $subjects = array();
+  foreach ($query as $subjectInfo) {
+    $subjects[$subjectInfo->id] = $subjectInfo->name;
+  }
+  return ($subjects);
+}
+
+/**
+ * Gets the courses degree table.
+ *
+ * @return     <array>  The courses degree table.
+ */
+function get_courses_degree_table(){
+  $query = db_select('sicnotas_management_courses', 'courses');
+  $query->innerJoin('sicnotas_management_degrees', 'degrees', 'courses.degree_id = degrees.id');
+  $query->addField('courses', 'name', 'course_name');
+  $query->addField('courses', 'id', 'course_id');
+  $query->addField('degrees', 'name', 'degree_name');
+  $query->addField('degrees', 'id', 'degree_id');
+  $query = $query->execute()->fetchAll();
+  return $query;
+}
+
+
+function get_degrees(){
+  $query = db_select('sicnotas_management_degrees', 'degree')
+    ->fields('degree')
+    ->execute()->fetchAll();
+  return $query;
+}
+
+
+
+
+
+
+function get_year_degree_subject_table(){
+  $query = db_select('sicnotas_management_subjects_degree', 'smsd');
+  $query->join('sicnotas_management_school_year', 'smsy', 'smsd.year_id = smsy.id');
+  $query->join('sicnotas_management_courses', 'smc', 'smsd.course_id = smc.id');
+  $query->join('sicnotas_management_subjects', 'sms', 'smsd.subject_id = sms.id');
+  $query->addField('smsd', 'course_id', 'course_name');
+  // $query->addField('smsd', 'id', 'course_id');
+  // $query->addField('degrees', 'name', 'degree_name');
+  // $query->addField('degrees', 'id', 'degree_id');
+  $query = $query->execute()->fetchAll();
+  return $query;
+}
+
+
+
+
+
+/**
+ * Gets the year table.
+ *
+ * @return     <array query>  The year table.
+ */
+function get_year_table(){
+  $years = db_select('sicnotas_management_school_year', 'year')
+    ->fields('year')
+    ->execute()->fetchAllKeyed();
+  array_walk($years, function (&$element) {
+    $element = array($element);
+  });
+  return $years;
+}
+
+/**
+ * Gets the competition table.
+ *
+ * @return     <array query>  The competition table.
+ */
+function get_competition_table(){
+  $competition = db_select('sicnotas_management_competition', 'competition')
+    ->fields('competition')
+    ->execute()->fetchAllKeyed();
+  array_walk($competition, function (&$element) {
+    $element = array($element);
+  });
+  return $competition;
+}
+
+/**
+ * Gets the subjects table.
+ *
+ * @return     <array query>  The subjects table.
+ */
+function get_subjects_table(){
+  $subjects = db_select('sicnotas_management_subjects', 'subjects')
+    ->fields('subjects')
+    ->execute()->fetchAllKeyed();
+  array_walk($subjects, function (&$element) {
+    $element = array($element);
+  });
+  return $subjects;
+}
+
+function get_courses_table(){
+  $courses = db_select('sicnotas_management_courses', 'courses')
+    ->fields('courses')
+    ->execute()->fetchAllKeyed();
+  array_walk($courses, function (&$element) {
+    $element = array($element);
+  });
+  return $courses;
+}
+
+/**
+ * Gets the degrees table.
+ *
+ * @return     <array query>  The degrees table.
+ */
+function get_degrees_table(){
+  $degrees = db_select('sicnotas_management_degrees', 'degree')
+    ->fields('degree')
+    ->execute()->fetchAllKeyed();
+  array_walk($degrees, function (&$element) {
+    $element = array($element);
+  });
+  return $degrees;
+}
+
+/**
+ * Gets the modal confirm delete
+ *
+ * @param      <array>  $form_state  The form state
+ *
+ * @return     <array>  container structure to get a bootstrap modal
+ */
+function modal_confirm_delete(&$form_state){
+  $table_name = str_replace('_form', '', $form_state['build_info']['form_id']);
+  $subject_message = str_replace('form', '', str_replace('_', ' ', str_replace('sicnotas_management_', '', $table_name)));
+  $return = array(
+      '#prefix' => '<div class="modal fade modal-confirm-delete" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"><div class="modal-dialog" role="document">',
+      '#suffix' => '</div></div>',
+      '#type' => 'container',
+      '#attributes' => array('class' => array('modal-content')),
+      'body' => array(
+        '#prefix' => '<div class="modal-body">',
+        '#suffix' => '</div>',
+        '#markup' => t("Are you sure you want to delete that $subject_message?")
+      ),
+      'footer' => array(
+        '#prefix' => '<div class="modal-footer">',
+        '#suffix' => '</div>',
+        'close' => array(
+          '#type' => 'button',
+          '#value' => t('Cancel'),
+          '#attributes' => array('data-dismiss' => "modal")
+        ),
+        'confirm' => array(
+          '#type' => 'submit',
+          '#value' => t('Confirm'),
+          '#name' => 'confirm_delete',
+        )
+      )
+    );
+  return $return;
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function sicnotas_management_theme($existing, $type, $theme, $path) {
+ return array( 'sicnotas_management_subjects_degree_form' => array(
+    'render element' => 'form',
+    'path' => drupal_get_path('theme', 'sicnotas_management_theme') . '/templates',
+    'template' => 'sicnotas-management-subjects-degree-form',
+    ),
+  );
+}
+
+/**
+ * Implements hook_init().
+ */
+// function sicnotas_management_init() {
+//   drupal_add_css('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css', 'external');
+//   drupal_add_js('https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js', 'external');
+// }

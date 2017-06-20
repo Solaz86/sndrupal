@@ -1,0 +1,91 @@
+<?php
+
+/**
+ * Implements hook_help().
+ */
+function _help($path, $arg) {
+  switch ($path) {
+    // Main module help for the block module
+    case 'admin/help#content':
+      return '<p>' . t('registration form') . '</p>';
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function school_registration_permission() {
+  return array(
+    'implement registration' =>  array(
+      'title' => t('implement registration'),
+      'description' => t('implement registration'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function school_registration_menu() {
+
+  $items['school-registration'] = array(
+    'title' => 'registration_form',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('school_registration_form'),
+    'access arguments' => array('implement registration'),
+    'type' => MENU_CALLBACK,
+  );
+
+
+
+  return $items;
+}
+
+/**
+ * Implements hook_form().
+ */
+function school_registration_form($form, &$form_state) {
+
+
+  $form['school_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Type the name from your school'),
+    '#attributes' => array('class' => array('animated bounce'))
+  );
+
+  $form['accept'] = array(
+    '#type' => 'submit',
+    '#value' => t('accept'),
+    '#submit' => array('school_registration_form_submit')
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_views_form_validate().
+ */
+function school_registration_form_validate($form, &$form_state) {
+  if (empty($form_state['values']['school_name'])) {
+    form_set_error ('school_name', ('Please input the name of your school'));
+  }
+}
+
+/**
+ * Implementation of hook_form_submit().
+ */
+function school_registration_form_submit($form, &$form_state) {
+  dpm($form_state['values']);
+  $values = $form_state['values'];
+  dpm($values);
+  $record = array(
+    'school_name' => $values['school_name'],
+  );
+  dpm($record);
+  db_insert('school_registration')
+    ->fields($record)
+    ->execute();
+
+  drupal_set_message(t('The user has been updated'), 'status');
+ drupal_goto('school-registration-options');
+}

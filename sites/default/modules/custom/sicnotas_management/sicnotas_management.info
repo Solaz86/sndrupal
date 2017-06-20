@@ -1,0 +1,5 @@
+name = Modulo de administración Sicnotas
+description = Administración de materias, competencias, grados, y cursos.
+package = Sicnotas
+core = 7.x
+version = 1.0.0

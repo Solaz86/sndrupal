@@ -1,0 +1,5 @@
+name = Modulo de administración de personal Sicnotas
+description = Administración de roles de personal
+package = Sicnotas
+core = 7.x
+version = 1.0.0

@@ -1,0 +1,601 @@
+<?php
+// comentario
+/**
+ * Implements hook_help().   modulo de ayuda se tiene que activar desde la pagina
+ */
+function carlos_form_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#carlos_form':
+      return '<p>' . t('Hello world') . '</p>';
+  }
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+function carlos_form_permission() {
+  return array(
+    'see carlos form' =>  array(
+       'title' => t('See carlos form'),
+       'description' => t('See the custom form by my module.'),
+    )
+  );
+}
+
+function carlos_login() {
+  drupal_add_css(drupal_get_path('module', 'carlos_form') . '/style.css');
+
+
+  return array();
+}
+
+function carlos_form_menu() {
+    $items['frontpage'] = array(   // defino el url
+    'title' => t('Home'),  // titulo del formulario
+    'page callback' => 'carlos_login',   // funcion que renderiza la url
+    'access arguments' => array('access content'),  //pasar argumentos a la funcion que da los permisos declarado en carlos_form_permission
+    'type' => MENU_NORMAL_ITEM  // tipo del item del menu
+  );
+
+  $items['carlos/formulario1'] = array(   // defino el url
+    'title' => t('Form1'),  // titulo del formulario
+    'page callback' => 'drupal_get_form',   // funcion que renderiza la url
+    'page arguments' => array('carlos_form_form'),   //pasar argumentos a  la funcion q c renderizara, en este caso el formulario
+    'access arguments' => array('see carlos form'),  //pasar argumentos a la funcion que da los permisos declarado en carlos_form_permission
+     // 'access callback' => true,
+    'type' => MENU_CALLBACK,  // tipo del item del menu
+  );
+
+  $items['carlos/pagina-custom'] = array(   //nuevo url
+    'title' => t('Users'),
+    'page callback' => 'carlos_pagina_custom',
+    'access arguments' => array('see carlos form'),
+    'type' => MENU_NORMAL_ITEM
+  );
+
+  $items['carlos/edit/%'] = array(   //nuevo urlz
+    'title' => t('edit'),
+    'page callback' => 'carlos_edit_user',
+    'page arguments' => array(2),
+    // 'access arguments' => array('see carlos form'),
+    'type' => MENU_NORMAL_ITEM,
+    'access callback' => TRUE
+  );
+    // http://drupal7.dev/carlos/edit/17 
+
+  $items['carlos/pagina-custom/delete/%'] = array(   //nuevo url
+    'title' => t('Users'),
+    'page callback' => 'carlos_delete_user',
+    'page arguments' => array(3),
+    'access arguments' => array('see carlos form'),
+    'type' => MENU_NORMAL_ITEM,
+    'delivery callback' => 'ajax_deliver'
+  );
+
+  $items['carlos/newedit'] = array(   //nuevo url
+    'title' => t('edit'),
+    'page callback' => 'carlos_new_edit',
+    // 'access arguments' => array('see carlos form'),
+    'type' => MENU_NORMAL_ITEM,
+    'access callback' => TRUE
+  );
+
+    $items['carlos/pagina/delete'] = array(   //nuevo url
+    'title' => t('delete'),
+    'page callback' => 'delete_user',
+    'type' => MENU_NORMAL_ITEM,
+    'access callback' => TRUE
+  );
+
+  return $items;  // retorno el array items
+
+}
+
+/**
+ * Alter front page for logued users
+ * Implements hook_url_inbound_alter().
+ */
+function carlos_form_url_inbound_alter(&$path, $original_path, $path_language) {
+  if (!user_is_anonymous() && drupal_is_front_page()) {
+    $path = 'carlos/formulario1';
+  }
+}
+
+  // return entity_delete_multiple($entity_type, array($id));
+  // 
+function delete_user(){
+  
+  if ($_POST['id'] != 1) {
+    module_load_include('php', 'carlos_form', 'includes/UserTest');
+    $user = new UserTest($_POST['id']);
+    
+    $user->delete();
+    drupal_json_output(array('code' => '200', id => $_POST['id']));
+  }else{
+    drupal_set_message(t('Unauthorized to delete this record'));
+  }
+}
+
+/**
+ * { function_description }
+ *
+ * @return     array  with saved data from entity user
+ */
+function carlos_new_edit(){
+  module_load_include('php', 'carlos_form', 'includes/UserTest');
+  if (empty($_POST['userid'])) return drupal_json_output(array('code' => '500', 'message' => 'Invalid data given.'));
+  $user = new UserTest($_POST['userid']);
+  $user->setUserName($_POST['name']);
+  // $userW->field_apellido->set($_POST['lastname']);
+   // save lastname
+  $user->setUserLastName($_POST['lastname']);
+  $user->setUserTel($_POST['tel']);
+  $user->setUserAge($_POST['age']);
+  $user->setUserOpsex($_POST['opsex']);
+  $user->saveUser();
+
+  $return = array();
+  $return['code'] = 401;
+  $return['user']['id'] = $user->getUserId();
+  $return['user']['name'] = $user->getUserName();
+  $return['user']['lastname'] = $user->getUserLastName();
+  $return['user']['telefono'] = $user->getUserTel();
+  $return['user']['age'] = $user->getUserAge();
+  $return['user']['opsex'] = $user->getUserOpsex();
+
+  drupal_json_output($return);
+}
+
+function carlos_edit_user($user_id) {
+  module_load_include('php', 'carlos_form', 'includes/UserTest');
+  $user = new UserTest(hexdec($user_id));
+  // $user = getUsers(array(hexdec($user_id)));
+  $return = array();
+  $return['name'] = $user->getUserName();
+  $return['lastname'] = $user->getUserLastName();
+  $return['tel'] = $user->getUserTel();
+  $return['age'] = $user->getUserAge();
+  $return['opsex'] = $user->getUserOpsex();
+
+
+  drupal_json_output($return);
+}
+
+
+  // function /carlos/pagina/delete
+
+/**
+ * Funcion que renderiza pagina de usuarios
+ *
+ * @return     array  Render
+ */
+function carlos_pagina_custom() {    // la funcion que va a renderizar el url /pagina carlos/pagina-custom
+  drupal_add_library('system', 'drupal.ajax');
+  module_load_include('php', 'carlos_form', 'includes/UserTest');
+  drupal_add_js(drupal_get_path('module', 'carlos_form') . '/js/carlos.js');
+  drupal_add_js(array('carlos_form' => array('back' => t('Back to create new account'))), array('type' => 'setting'));
+  $usersForm = drupal_get_form('carlos_form_form'); //funcion de drupal para crear un formulario en la el argumento es el form id
+  $formToTemplate = drupal_get_form('carlos_form_form'); // Formulario que se enviara al template
+
+  /*$return['#attached']['js'][] = array(
+    'type' => 'file',
+    'data' => drupal_get_path('module', 'carlos_form') . '/js/carlos.js',
+  );*/
+
+  $return['wrapper'] = [    //  array $return en el indice wraper(empaquetador)
+    '#prefix' => '<div class="wrapper-form-content">',    //con el #prefix #sufix form se usa cualquier etiqueta html en el que se mete el formulario que redondee algo
+    '#suffix' => '</div>',
+    'form' => [
+      '#markup' => drupal_render($usersForm)   // en el #markup ponemos la funcion drupal_render para renderizar el formulario $usersForm
+    ]
+  ];
+
+  // $results = db_query('SELECT * FROM usuarios')->fetchAll();
+  // $results = getUsers();
+  $users = db_select('users', 'usr') 
+    ->fields('usr')
+    ->execute()->fetchAll();
+
+  // while ($node = db_fetch_object(stmt))
+  $rows = array();  // estas son las filas, aca se define la variable como un array, en caso contratio va estar indefinida
+  $eliminar = array(); 
+  $modal = array();// array para ingresar un submit con las caracteristicas de subbmi     
+  foreach ($users as $key => $user) {   //results es el array que contiene el indice key y los value user
+    $user = new UserTest($user->uid); // se crea el objeto $user de la clase UserTest, que contiene el usuario
+    // Validamos que no sea anonimo
+    if (!in_array('anonymous user', $user->getRoles())) {
+      // dpm($user->getUser());
+
+      $edit = l(t('Edit'), '/carlos/pagina-custom', ['query' => ['user_id' => dechex($user->getUserId()), 'user_name' => $user->getUserName()]]);
+      $editAlt = l('Edicion alternativa', '#', ['attributes' => ['class' => ['btn btn-primary edit-alt'], 'data-id' => dechex($user->getUserId())]]);
+
+      $actions = array(
+        'editar' => array('#markup' => $edit),
+        'editalt' => array('#markup' => $editAlt),
+        'delete' => array('#markup' => l(t('Delete'), '#', array(
+          'attributes' => array('class' => 'delete-user')
+        ))),
+        // 'modal' => array('#markup' => drupal_render($modal))
+      );
+
+      $row = array(
+        $user->getUserId(),
+        $user->getUserName(),
+        $user->getUserLastName(),
+        $user->getUserTel(),
+        $user->getUserAge(),
+        $user->getUserOpsex(),
+        drupal_render($actions),
+      );
+      $rows[] = array('data' => $row, 'id' => 'row-user-' . $user->getUserId());
+
+    }
+  }
+
+  $header = array('Id', t('Name'), t('Lastname'), t('Telefono'), t('Age'), t('Gender'), t('Actions'));   // estas son las columnas
+  $table = theme('table', array(    // pone un tema un hook, pero en este caso a la tabla
+    'header' => $header, 
+    'rows' => $rows, 
+    'empty' => t('No results found.')
+    )
+  );
+  
+  if (($usersForm['#action']) != '/carlos/pagina-custom'){
+
+  } else {
+    $return['wrapper']['table'] = [  // guardo en el indice table del indice wrapper de el array $return una tabla
+      '#markup' => $table
+    ];
+  }
+   
+  //dpm($return, 'return return');   // en return tenemos un formulario y una tabla y el prefijo y el sufijo que contienen la etiqueta div  donde se renderiza el markup
+
+  $tabla = array(
+    'header' => array('id', 'nombre', 'color', 'sabor'),
+    'rows' => array(
+      array(1, 'Edilson', 'Amarillo', 'Gris'),
+      array(2, 'Carlos', 'Rojo', 'Gris')
+    )
+  );
+
+  return theme('pagina_custom', array(
+    'form' => drupal_render($formToTemplate),
+    'table' => $table,
+    'tabla' => $tabla
+  ));
+  // return $return;
+}
+
+
+
+/**
+ * Implements hook_form().
+ */
+
+/**
+ * Implements hook_validate().
+ */
+//function carlos_form_validate($_POST['name'], &$form_state) {
+  /*
+   *if (isset($node->end) && isset($node->start)) {
+   *  if ($node->start > $node->end) {
+   *    form_set_error('time', t('An event may not end before it starts.'));
+   *  }
+   *}
+   */
+  /* Your code here */
+//}
+/**
+ * Implements hook_form().
+ */
+function carlos_form_form($form, &$form_state) {   // la funcion que vamos a renderizar y se llama en el hook menu
+  module_load_include('php', 'carlos_form', 'includes/UserTest');
+  $bool_edit_user = FALSE;   // variable booleana
+  if (!empty($_GET['user_id'])) {   //condicion para que lo que reciba d user si id esta vacio haga
+
+    // $user = getUsers(array(hexdec($_GET['user_id'])));  //en la variable $user ponemos el retorno de la funcion getUser con un array por argumento indicando el id que pasa por GET con todos los id de la tabla
+    $user = new UserTest(hexdec($_GET['user_id']));
+    if (empty($user)) {    
+      drupal_goto('/carlos/pagina-custom');  // si la tabla esta vacia en la bd se dirige a la pagina-custom
+    } else {
+      $form_state['storage']['user'] = $user;
+      $bool_edit_user = TRUE;
+    }
+  }
+  //se definen los campos del formulario segun los atributos de cada tipo establecidos en la documentacion de drupal https://api.drupal.org/api/drupal/modules!node!node.api.php/function/hook_form/7.x
+  //
+  
+  $form['volver'] = array(
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => l(t('Back to create new account'), 'carlos/pagina-custom', array('attributes' => array('id' => 'back-create'))),
+    '#access' => $bool_edit_user
+  );
+
+  $form['user-id'] = array(  
+    '#type' => 'hidden',
+    '#value' => $bool_edit_user ? $user->getUserId() : '',
+    '#attributes' => array(
+      'id' => 'ide'
+      )
+  );
+
+  $form['name'] = array(  
+    '#type' => 'textfield',
+    '#title' => t('Ingrese su nombre'),
+    '#default_value' => $bool_edit_user ? $user->getUserName() : ''
+  );
+    $form['lastname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Ingrese su apellido'),
+    '#required' => true,
+    '#default_value' => $bool_edit_user ? $user->getUserLastName() : ''
+  );
+ 
+  $form['age'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Ingrese su edad'),
+    '#required' => true,
+    '#default_value' => $bool_edit_user ? $user->getUserAge() : ''
+  );
+  $form['opsex'] = array(
+    '#type' => 'radios',
+    '#title' => t('elija el sexo'),
+    '#options' => array('man' => t('Man'), 'woman' => t('Woman')),
+    '#default_value' => $bool_edit_user ? $user->getUserOpsex() : 'man'  
+  );  
+
+  $form['create'] = array(
+    '#type' => 'submit',
+    '#name' => 'create',
+    '#value' => t('Create'),
+    '#access' => !$bool_edit_user
+  );
+
+  $form['update'] = array(
+    '#type' => 'submit',
+    '#name' => 'update',
+    '#value' => t('Update'),
+    '#access' => $bool_edit_user
+  );
+
+  $form['updatealt'] = array(
+    '#type' => 'submit',
+    '#value' => t('AlterUpdate'),
+    '#attributes' => array(
+      'style' => 'display: none',
+      'class' => array('btn btn-primary')
+    )
+  );
+
+  /*$form['new_account'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create new account'), 
+    '#access' => $bool_edit_user,
+    '#ajax' => array(
+      'callback' => 'carlos_form_ajax',   // este es el llamado a una funcion ajax q se usa en el boton new account
+    ),
+  );*/
+  
+
+  return $form;
+}
+
+/**
+ * Gets the users.
+ *
+ * @param      array  $users_id  The user identifier
+ *
+ * @return     array  The users.
+ */
+function getUsers ($users_id = array()) {
+  $select = db_select('$user', 'us')
+    ->fields('us');
+
+  if (!empty($users_id)) {
+    $select->condition('id', $users_id, 'IN');
+  }
+  $users = $select->execute()->fetchAll();  // la funcion execute ejecuta un query, fetchAll devuelve objero arma una trama de todo lo que encuentre, y fecthAssoc con el primero devuelve un array Asociativo
+
+  return $users; // en users estan todos los id de la tabla usuario 
+}
+
+/**
+ * CAllback del ajax
+ *
+ * @param      array  $form        The form
+ * @param      array  $form_state  The form state
+ *
+ * @return     array  ( description_of_the_return_value )
+ */
+function carlos_form_ajax($form, &$form_state) {
+  drupal_add_library('system', 'drupal.ajax');  //siempre que se quiere usar una funcion ajax se agrega la libreria ajax
+  $commands = array();   // se asigna a la variable $commands una array
+// segundo  @param $method * The jQuery method to invoke.
+// tercero @param $arguments * (optional) A list of arguments to the jQuery $method
+
+  $commands[] = ajax_command_invoke('#edit-name', 'val', array(''));  // vacia el campo nombre 
+  $commands[] = ajax_command_invoke('#edit-lastname', 'val', array('')); // vacia el campo apellido
+  $commands[] = ajax_command_invoke('#edit-age', 'val', array('')); // vacia el campo edad
+  $commands[] = ajax_command_remove('#edit-new-account'); // quita el boton
+
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/**
+ * Implements hook_form_validate().
+ *
+ * @param      array  $form        The form
+ * @param      array  $form_state  The form state
+ */
+function carlos_form_form_validate($form, &$form_state) {   //validacion de un campo del formulario
+  //una condicion boolean al array $form['valus']['name']
+  if (empty($form_state['values']['name'])) {   
+  // si es nombre esta vacido requiere que se llene
+    form_set_error('name', t('Error, este campo es requerido.')); 
+  }
+  if (!is_numeric($form_state['values']['age'])) {  //condicion para validar numeros
+    form_set_error('age', t('Error, este campo es numerico.')); # code... 
+  }
+  //dpm($form_state, 'Form state en validate');
+
+}
+
+/**
+ * Implements hook_block_info().
+ *
+ * @return     array  ( description_of_the_return_value )
+ */
+function carlos_form_block_info() {   // se crea un bloque y se le da una descripcion
+  $blocks['bloque_custom'] = array(
+    'info' => t('Bloque personalizado de prueba'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ *
+ * @param      string  $delta  The delta
+ *
+ * @return     array   ( en el array $block en el caso $block['concent'] )
+ */
+function carlos_form_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'bloque_custom':
+      $block['subject'] = '';
+      $block['content'] = array('#markup' => '<p>MUNDOSa</p>');
+      break;
+    
+  }
+  return $block;
+}
+
+
+
+/**
+ * Implements hook_form_submit().
+ *
+ * @param      array  $form        The form
+ * @param      array  $form_state  The form state
+ */
+function carlos_form_form_submit($form, &$form_state) {  //con este hook se envian los campos seleccionados a la bd
+  //dpm($form_state, 'Form state en submit');
+
+  // en la variable $values asignamos el arry $form_state indice values//distinguir en update, y create
+  module_load_include('php', 'carlos_form', 'includes/UserTest');
+  $password = user_password(8);
+  $values = $form_state['values']; 
+  $record = array(
+    'name' => $values['name'],
+    'field_apellido' => $values['lastname'],
+    'field_edad' => $values['age'],
+    'field_genero' => $values['opsex'], 
+    'field_telefono' => $form_state['values']['tel']
+  );
+
+  // dpm($form_state);
+
+
+  if ($form_state['triggering_element']['#name'] == 'create') {
+
+    $fields = array(
+      'name' => $values['name'],
+      'mail' => 'o416193@mvrht.com',
+      'pass' => $password,
+      'status' => 1,
+      'init' => 'uo416193@mvrht.com',
+      'roles' => array(
+        DRUPAL_AUTHENTICATED_RID => 'authenticated user',
+      ),
+      'field_apellido' => array(LANGUAGE_NONE => array(array('value' => $values['lastname']))),
+      'field_edad' => array(LANGUAGE_NONE => array(array('value' => $values['age']))),
+      'field_genero' => array(LANGUAGE_NONE => array(array('value' => $values['opsex']))),
+      'field_telefono' => array(LANGUAGE_NONE => array(array('value' => $values['tel']))),
+    );
+    $account = user_save('', $fields);
+    // dpm($account);
+
+
+    // db_insert('usuarios')->fields($record)->execute();  // esta funcion es la que inserta los datos segunn los parametros establecidos
+    // $form_state['storage']['last_id'] = Database::getConnection()->lastInsertId();
+    drupal_set_message(t('The user has been saved successfully.'), 'status');
+  } else {
+    // db_update('usuarios')
+    //   ->fields($record)
+    //   ->condition('id', $form_state['storage']['user'][0]->id)
+    //   ->execute();
+    //   
+    // dpm($form_state, 'form_state en form submit');
+    $userW = new UserTest($values['user-id']);
+    $userW->setUserName($values['name']);
+    $userW->setUserLastName($values['lastname']);
+    $userW->setUserTel($values['tel']);
+    $userW->setUserAge($values['age']);
+    $userW->setUserOpsex($values['opsex']);
+    $userW->saveUser();
+
+    drupal_set_message(t('The user has been updated'), 'status');
+
+  }
+}
+/**
+ * Implementation of hook_views_api().
+ */
+function carlos_form_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'carlos_form') . '/views'
+  );
+}
+
+/**
+ * Implements hook_theme().
+ */
+function carlos_form_theme($existing, $type, $theme, $path) {
+  return array(
+    'pagina_custom' => array(
+      'template' => 'templates/pagina-custom',
+      'variables' => array('form' => NULL, 'table' => NULL)
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function carlos_form_node_view($node, $view_mode, $langcode) {
+  $nodeW = entity_metadata_wrapper('node', $node);
+
+  if ($nodeW->field_count_views->value()) {
+    $count = $nodeW->field_count_views->value();
+  }
+  else {
+    $count = 0;
+  }
+
+  $count++;
+  $nodeW->field_count_views->set($count);
+  $nodeW->save();
+}
+
+/**
+ * Gets the most viewed nodes.
+ *
+ * @return     array  The most viewed nodes.
+ */
+function get_most_viewed_nodes ($range = 3) {
+  $most_viewed = db_select('field_data_field_count_views', 'count')
+    ->fields('count', array('entity_id'))
+    ->orderBy('field_count_views_value', 'DESC')
+    ->range(0, $range)
+    ->execute()->fetchCol('entity_id');
+
+  return $most_viewed;
+}
