@@ -20,7 +20,7 @@ function sicnotas_register_menu() {
   $items['staff-register'] = array(
     'title' => t('Staff registration'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array(sicnotas_register_staff_form),
+    'page arguments' => array('sicnotas_register_staff_form'),
     'access arguments' => array('sicnotas staff permission'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'inc/sicnotas_register_staff.inc'
@@ -29,7 +29,7 @@ function sicnotas_register_menu() {
   $items['students-register'] = array(
     'title' => t('Students registration'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array(sicnotas_register_students_form),
+    'page arguments' => array('sicnotas_register_students_form'),
     'access arguments' => array('sicnotas staff permission'),
     'type' => MENU_NORMAL_ITEM,
     'file' => 'inc/sicnotas_register_students.inc'
