@@ -105,6 +105,7 @@ function sicnotas_register_staff_form_validate($form, &$form_state) {
  * Implementation of hook_bean_form_submit().
  */
 function sicnotas_register_staff_form_submit($form, $form_state) {
+dpm($form_state['values']['rol']);
   $account = new stdClass();
   $account->is_new = TRUE;
 // defino el registro unico name concatenando con el numero de id

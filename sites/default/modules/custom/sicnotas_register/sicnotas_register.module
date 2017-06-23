@@ -44,7 +44,8 @@ function sicnotas_register_menu() {
 function sicnotas_register_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'user_profile_form') {
     $roles = $form['account']['roles']['#options'];
-    $allowedRoles = ['Teacher', 'Student'];
+    dpm($roles,'roles');
+    $allowedRoles = ['Teacher', 'School administrator'];
     foreach ($roles as $key => $value) {
       if ($value == 'Teacher' || $value == 'School administrator') {
         $rol_filter = array_filter($roles, function ($nameRol) use($allowedRoles) {

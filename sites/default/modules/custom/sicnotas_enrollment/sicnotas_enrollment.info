@@ -1,0 +1,5 @@
+name = Modulo de matricula
+description = Administración de matricula
+package = Sicnotas
+core = 7.x
+version = 1.0.0

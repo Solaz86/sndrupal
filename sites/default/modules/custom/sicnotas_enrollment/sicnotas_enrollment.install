@@ -1,0 +1,69 @@
+<?php
+
+/**
+ * Implements hook_schema().
+ */
+function sicnotas_enrollment_schema() {
+  $schema['sicnotas_enrollment'] = array(
+    'description' => 'enrollment',
+    'fields' => array(
+      'id' => array(
+        'description' => 'course id',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'course_id' => array(
+        'description' => 'course id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'student_id' => array(
+        'description' => 'student id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'school_manager_id' => array(
+        'description' => 'school manager id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'year_id' => array(
+        'description' => 'school manager id',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
+      ),
+      'status' => array(
+      	'description' => 'status',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0
+      )
+    ),
+    'foreign keys' => array(
+      'course_degree' => array(
+        'table' => 'sicnotas_management_courses',
+        'columns' => array('course_id' => 'id'),
+      ),
+      'student_enrollment' => array(
+        'table' => 'users',
+        'columns' => array('student_id' => 'user_id'),
+      ),
+      'year_enrollmentyear' => array(
+        'table' => 'sicnotas_management_school_year',
+        'columns' => array('year_id' => 'id'),
+      )
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}

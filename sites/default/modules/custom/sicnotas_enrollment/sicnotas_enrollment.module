@@ -1,0 +1,209 @@
+<?php
+
+/**
+ * Implements hook_permission().
+ */
+function sicnotas_enrollment_permission() {
+  return array(
+    'permissions to enrollment' =>  array(
+      'title' => t('permissions for school enrollment'),
+      'description' => t('who can enrollment students'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function sicnotas_enrollment_menu() {
+
+  $items['enrollment'] = array(
+    'title' => t('School Enrollment form'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sicnotas_enrollment_form'),
+    'access arguments' => array('permissions to enrollment'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+    $items['sid/autocomplete/students'] = array(
+    'title' => 'Autocomplete for students id',
+    'page callback' => '_sid_autocomplete',
+    'access arguments' => array('permissions to enrollment'),
+    'type' => MENU_CALLBACK
+  );
+
+  return $items;
+}
+
+
+/**
+ * Implements hook_form().
+ */
+function sicnotas_enrollment_form($form, &$form_state) {
+  global $user;
+
+  // dpm($user);
+  $form['sid'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Identidad del usuario'),
+    '#name' => 'sid',
+    '#autocomplete_path' => 'sid/autocomplete/students',
+    '#ajax' => array(
+      'callback' => 'sicnotas_enrollment_ajax',
+      'wrapper' => 'user-info'
+    )
+  );
+
+  // dpm($form_state);
+  $boolUserExists = FALSE;
+  if (!empty($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'sid') {
+    list($uid) = explode('|', $form_state['values']['sid']);
+    $userInfo = entity_metadata_wrapper('user', $uid);
+    $boolUserExists = TRUE;
+  dpm($userInfo->value());
+  }
+
+  $form['user'] = array(
+    '#prefix' => '<div id="user-info">',
+    '#suffix' => '</div>',
+  );
+  $form['user']['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name'),
+    '#value' => $boolUserExists ? $userInfo->field_nombre->value() : ''
+  );
+
+  $form['user']['lastname'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Lastname'),
+    '#value' => $boolUserExists ? $userInfo->field_apellido->value() : ''
+
+  );
+
+  // $form['identification'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Identification number'),
+  // );
+
+  $form['user']['student_phone'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Student phone number'),
+    '#value' => $boolUserExists ? $userInfo->field_telefono->value() : ''
+
+  );
+
+  $form['user']['student_mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Student Email'),
+    '#value' => $boolUserExists ? $userInfo->mail->value() : ''
+
+  );
+
+  $form['user']['attendant_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Attendant name'),
+    '#value' => $boolUserExists ? $userInfo->field_nombre_del_acudiente->value() : ''
+
+  );
+
+  $form['user']['attendant_number'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Attendant phone number'),
+    '#value' => $boolUserExists ? $userInfo->field_telefono_del_estudiante->value() : ''
+  );
+
+  $form['user']['attendant_mail'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Identification number'),
+    '#value' => $boolUserExists ? $userInfo->field_correo_del_acudiente->value() : ''
+  );
+  
+  $form['user']['address'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Address'),
+    '#value' => $boolUserExists ? $userInfo->field_direccion->value() : ''
+
+  );
+
+
+  $form['accept'] = array(
+    '#type' => 'submit',
+    '#value' =>t('Accept'),
+    '#name' => 'accept'
+  );
+
+
+
+
+
+
+
+  return $form;
+}
+
+function sicnotas_enrollment_ajax($form, &$form_state) {
+  if ($form_state['triggering_element']['#name'] == 'sid') {
+    return $form['user'];
+  }
+}
+
+
+function _sid_autocomplete($string){
+  // dpm($string);
+  $role = user_role_load_by_name('student');
+  $students = db_select('users_roles', 'ur');
+  $students->innerJoin('field_data_field_numero_de_identificacion', 'identifier', 'ur.uid = identifier.entity_id');
+  $students->fields('ur', array('uid'));
+  $students->fields('identifier', array('field_numero_de_identificacion_value'));
+  $students->condition('bundle', 'user');
+  $students->condition('rid', $role->rid);
+  $students->condition('field_numero_de_identificacion_value', '%'.$string.'%', 'LIKE');
+  $result = $students->execute()->fetchAll();
+  // dpm($result);
+
+  $users = array();
+  foreach ($result as $key => $userInfo) {
+    $users["{$userInfo->uid}|{$userInfo->field_numero_de_identificacion_value}"] = "{$userInfo->field_numero_de_identificacion_value}";
+  }
+
+  drupal_json_output($users);
+}
+
+
+
+/**
+ * Implements hook_node_submit().
+ */
+function sicnotas_enrollment_form_submit($form, &$form_state) {
+    $roles = db_select('role', 'r')
+            ->fields('r', array('rid', 'name')) 
+            ->condition('name', 'student')
+            ->execute()->fetchAllKeyed();
+            dpm($roles);
+  $account = new stdClass();
+  $account->is_new = TRUE;
+// defino el registro unico name concatenando con el numero de id
+  $name_id = $form_state['values']['name'] . $form_state['values']['identification'];
+  $new_user = array(
+      'name' => $name_id,
+      'mail' => $form_state['values']['student_mail'],
+      'init' => $form_state['values']['student_mail'],
+      'pass' => $form_state['values']['identification'],
+      'status' => 1,
+      'access' => REQUEST_TIME,
+    );
+  user_save($account, $new_user);
+  // Asignacion del rol y campos custom
+  $user = user_load($account->uid);
+  $user->field_nombre[LANGUAGE_NONE][0]['value'] = $form_state['values']['name'];
+  $user->field_apellido[LANGUAGE_NONE][0]['value'] = $form_state['values']['lastname'];
+  $user->field_direccion[LANGUAGE_NONE][0]['value'] = $form_state['values']['address'];
+  $user->field_telefono[LANGUAGE_NONE][0]['value'] = $form_state['values']['attendant_number'];
+  $user->field_nombre_del_acudiente[LANGUAGE_NONE][0]['value'] = $form_state['values']['attendant_name'];
+  $user->field_tipo_de_documento[LANGUAGE_NONE][0]['value'] = $form_state['values']['document'];
+  $user->field_numero_de_identificacion[LANGUAGE_NONE][0]['value'] = $form_state['values']['identification'];
+  $user->field_telefono_del_estudiante[LANGUAGE_NONE][0]['value'] =$form_state['values']['student_mail'];
+  $user->field_correo_del_acudiente[LANGUAGE_NONE][0]['value'] =$form_state['values']['attendant_mail'];
+  user_multiple_role_edit(array($user->uid), 'add_role', '6');
+  user_save($user);
+}
